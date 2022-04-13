@@ -6,7 +6,7 @@ from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt,QObject
 import sys
 import cv2
 
-from pts_parse import read_pts_file, move_center, normalize_data
+from pts_parse import get_mean_face, read_pts_file, move_center, normalize_face
 
 
 class App(QWidget):
@@ -42,9 +42,10 @@ class App(QWidget):
 
     def render_image(self, cv_img):
         # cv2.circle(img=cv_img, center = (250,250), radius =10, color =(0,255,0), thickness=-1)
-        data = read_pts_file()
-        data = move_center(data)
-        data = normalize_data(data)
+        # data = read_pts_file()
+        # data = move_center(data)
+        # data = normalize_data(data)
+        data = get_mean_face()
         for d in data:
             x = int(d[0]*200)+200
             y = int(d[1]*200)+200
