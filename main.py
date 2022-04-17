@@ -5,25 +5,21 @@ from PyQt5.QtGui import QPixmap, QImage, QColor
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt,QObject
 import sys
 
-from numpy.compat.py3k import is_pathlib_path
 import cv2
 import numpy as np
-from pts_parse import get_mean_face, read_pts_file, move_center, normalize_face, get_principal_components, get_eigenvalues_per_face
-
+from FaceModel import FaceModel
 
 class App(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Facial Principal Components demo :D")
+        self.face_model = FaceModel('landmark_data',10)
         self.disply_width = 640
         self.display_height = 480
         self.scale = 250
         self.x_ofs = 250
         self.y_ofs = 250
-        self.num_pcs = 5
-        self.pc_weight = np.zeros(self.num_pcs)
-        self.mean_face = get_mean_face()
-        self.pc = get_principal_components(self.num_pcs)
+        self.pc_weight = np.zeros(self.face_model.n_pc)
         self.is_background = False
         # create the label that holds the image
         self.image_label = QLabel(self)
@@ -54,7 +50,7 @@ class App(QWidget):
         self.slider_y_ofs.valueChanged.connect(self.on_ofs_change)
 
         self.sliders_pc = []
-        for i in range(0, self.num_pcs):
+        for i in range(0, self.face_model.n_pc):
             self.sliders_pc.append(QSlider(Qt.Horizontal))
             self.sliders_pc[i].setMinimum(-100)
             self.sliders_pc[i].setMaximum(100)
@@ -72,7 +68,7 @@ class App(QWidget):
         vbox.addWidget(self.slider_x_ofs)
         vbox.addWidget(QLabel('y-offset'))
         vbox.addWidget(self.slider_y_ofs)
-        for i in range(0, self.num_pcs):
+        for i in range(0, self.face_model.n_pc):
             vbox.addWidget(QLabel(str(i+1)+'-PC'))
             vbox.addWidget(self.sliders_pc[i])
 
@@ -82,9 +78,10 @@ class App(QWidget):
         self.refresh_image()
 
     def refresh_image(self):
-        ret = self.render_image(self.lena if self.is_background else self.background)
+        ret = self.render_face(self.lena if self.is_background else self.background)
         qt_img = self.convert_cv_qt(ret)
         self.image_label.setPixmap(qt_img)
+
     def on_check_changed(self, state):
         self.is_background = state
         self.refresh_image()
@@ -93,18 +90,17 @@ class App(QWidget):
         self.refresh_image()
         
     def on_pc_changed(self,value):
-        for i in range(0, self.num_pcs):
+        for i in range(0, self.face_model.n_pc):
             self.pc_weight[i] = self.sliders_pc[i].value()/100.0
         self.refresh_image()
 
-    def render_image(self, cv_img):
+    def render_face(self, cv_img):
         img = cv_img.copy()
         #TODO: move this out!
         weighted_sum = np.zeros((68,2))
-        for i in range(0, self.num_pcs):
-            weighted_sum  = weighted_sum + self.pc[i] * self.pc_weight[i]
-        print(self.pc_weight)
-        data = self.mean_face+weighted_sum
+        for i in range(0, self.face_model.n_pc):
+            weighted_sum  = weighted_sum + self.face_model.pc[i] * self.pc_weight[i]
+        data = self.face_model.mu+weighted_sum
         for d in data:
             x = int(d[0]*self.scale)+self.x_ofs
             y = int(d[1]*self.scale)+self.y_ofs
