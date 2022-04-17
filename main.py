@@ -8,7 +8,7 @@ import sys
 from numpy.compat.py3k import is_pathlib_path
 import cv2
 import numpy as np
-from pts_parse import get_mean_face, read_pts_file, move_center, normalize_face, get_principal_components
+from pts_parse import get_mean_face, read_pts_file, move_center, normalize_face, get_principal_components, get_eigenvalues_per_face
 
 
 class App(QWidget):
@@ -103,6 +103,7 @@ class App(QWidget):
         weighted_sum = np.zeros((68,2))
         for i in range(0, self.num_pcs):
             weighted_sum  = weighted_sum + self.pc[i] * self.pc_weight[i]
+        print(self.pc_weight)
         data = self.mean_face+weighted_sum
         for d in data:
             x = int(d[0]*self.scale)+self.x_ofs

@@ -16,7 +16,6 @@ def get_all_face(dirname = 'landmark_data'):
     """
     all_data = []
     files = glob.glob(dirname+'/*.pts')
-    mean = np.zeros(shape=(68,2))
     for file in files:
         data = read_pts_file(file)
         data = move_center(data)
@@ -112,15 +111,53 @@ def read_pts_file(filename ='indoor_001.pts'):
 
 
 def get_principal_components(n_components = 3):
+    """
+    Gets principal components for each faces.
+
+    Parameters:
+    -------------
+    n_components : number of principal components to obtain
+
+    Return:
+    -------------
+    principal components: in 3 dimension vector data (n_components x 68 x 2)
+    """
     data = get_all_face()
-    data=data.reshape(188, 68*2)
+    data=data.reshape(data.shape[0], 68*2)
     pca = PCA(n_components = n_components)
     pca.fit(data)
     return pca.components_.reshape(n_components, 68, 2)
-            
+
+def get_eigenvalues_per_face(face, principal_components):
+    """
+    Gets eigenvalues for given facial data from constructed facial Point Distribution Model.
+    (formally, calculates b = P.T(x-mu) for P as principal components and mu as mean face)
+
+    Parameters:
+    ------------
+    face: facial data
+    principal_components: principal components from facial data
+
+    Return:
+    ------------
+    eigenvalues: eigenvalues for corresponding Principal component vectors.
+    """
+
+    n_components = principal_components.shape[0]
+    # reshape p-components into n*136 positive-semi-definite matrix
+    P = principal_components.reshape(n_components, 68*2)
+    # get mean #TODO: make FaceModel class
+    mu = get_mean_face().reshape(68*2)
+    face = face.reshape(68*2)
+    b = np.dot(P, face-mu)
+    return b
+
+
 
 
 if __name__ == '__main__':
-    pc = get_principal_components(3)
-    print(pc)
-    
+    pc = get_principal_components(5)
+    data = read_pts_file()
+    data = move_center(data)
+    data = normalize_face(data)
+    print(get_eigenvalues_per_face(data, pc))
