@@ -133,10 +133,9 @@ class FaceModel:
         pca = PCA(n_components = n_components)
         pca.fit(data)
         self.pc_eigen = pca.explained_variance_
-        print(self.pc_eigen)
         return pca.components_.reshape(n_components, 68, 2)
 
-    def get_eigenvalues_per_face(self, face, principal_components):
+    def get_eigenvalues_per_face(self, face):
         """
         Gets eigenvalues for given facial data from constructed facial Point Distribution Model.
         (formally, calculates b = P.T(x-mu) for P as principal components and mu as mean face)
@@ -151,21 +150,23 @@ class FaceModel:
         eigenvalues: eigenvalues for corresponding Principal component vectors.
         """
 
-        n_components = principal_components.shape[0]
+        n_components = self.pc.shape[0]
         # reshape p-components into n*136 positive-semi-definite matrix
-        P = principal_components.reshape(n_components, 68*2)
+        P = self.pc.reshape(n_components, 68*2)
         # get mean #TODO: make FaceModel class
         mu = self.mu.reshape(68*2)
         face = face.reshape(68*2)
         b = np.dot(P, face-mu)
         return b
+    def get_deformation_factor(self, face):
+        
+        pass
 
 
 
 if __name__ == '__main__':
     face_model = FaceModel()
-    pc = face_model.get_principal_components(5)
     data = face_model.read_pts_file()
     data = face_model.move_center(data)
     data = face_model.normalize_face(data)
-    print(face_model.get_eigenvalues_per_face(data, pc))
+    print(face_model.get_eigenvalues_per_face(data))

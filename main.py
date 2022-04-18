@@ -1,6 +1,5 @@
-from pydoc import render_doc
 from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtWidgets import QCheckBox, QWidget, QApplication, QLabel, QVBoxLayout, QHBoxLayout, QSlider
+from PyQt5.QtWidgets import QCheckBox, QWidget, QApplication, QLabel, QVBoxLayout, QHBoxLayout, QSlider, QGridLayout
 from PyQt5.QtGui import QPixmap, QImage, QColor
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt,QObject
 import sys
@@ -8,6 +7,7 @@ import sys
 import cv2
 import numpy as np
 from FaceModel import FaceModel
+from PatchModel import PatchModel
 
 class App(QWidget):
     def __init__(self):
@@ -23,9 +23,12 @@ class App(QWidget):
         self.is_background = False
         # create the label that holds the image
         self.image_label = QLabel(self)
+        self.patch_label = QLabel(self)
         #self.image_label.resize(self.disply_width, self.display_height)
         # create a text label
         self.textLabel = QLabel('lena.png')
+
+        self.grid = QGridLayout()
 
         self.backgound_checkbox = QCheckBox()
         self.backgound_checkbox.setText('use background')
@@ -58,8 +61,10 @@ class App(QWidget):
             self.sliders_pc[i].valueChanged.connect(self.on_pc_changed)
 
         # create a vertical box layout and add the two labels
+        self.grid.addWidget(self.image_label,0, 0)
+        self.grid.addWidget(self.patch_label,0, 1)
         vbox = QVBoxLayout()
-        vbox.addWidget(self.image_label)
+        # vbox.addWidget(self.image_label)
         vbox.addWidget(self.backgound_checkbox)
         vbox.addWidget(self.textLabel)
         vbox.addWidget(QLabel('scale'))
@@ -71,11 +76,17 @@ class App(QWidget):
         for i in range(0, self.face_model.n_pc):
             vbox.addWidget(QLabel(str(i+1)+'-PC'))
             vbox.addWidget(self.sliders_pc[i])
-
-        self.setLayout(vbox)
+        self.grid.addLayout(vbox,1,0)
+        self.setLayout(self.grid)
         self.lena = cv2.imread('lena.png')
         self.background = np.zeros((self.lena.shape[0], self.lena.shape[1], 3), np.uint8)
         self.refresh_image()
+        self.load_image()
+
+        # patch
+        self.patch_model = PatchModel()
+        self.draw_image_sub(self.patch_model.extract_patch()[0])
+
 
     def refresh_image(self):
         ret = self.render_face(self.lena if self.is_background else self.background)
@@ -93,6 +104,31 @@ class App(QWidget):
         for i in range(0, self.face_model.n_pc):
             self.pc_weight[i] = self.sliders_pc[i].value()/100.0
         self.refresh_image()
+
+    def load_image(self, filename='indoor_001.png'):
+        self.img = cv2.imread(filename)
+        self.draw_image(self.plot_pts(self.img, self.load_pts()))
+        pass
+
+    def draw_image_sub(self, img):
+        self.img = img
+        qt_img = self.convert_cv_qt(self.img)
+        self.patch_label.setPixmap(qt_img)
+
+    def draw_image(self, img):
+        self.img = img
+        qt_img = self.convert_cv_qt(self.img)
+        self.image_label.setPixmap(qt_img)
+
+    def load_pts(self, filename='indoor_001.pts'):
+        data = self.face_model.read_pts_file(filename)
+        return data
+    def plot_pts(self, src, data):
+        for d in data:
+            x = int(d[0])
+            y = int(d[1])
+            src = cv2.circle(img=src, center = (x,y), radius =3, color =(0,255,0), thickness=-1)
+        return src
 
     def render_face(self, cv_img):
         img = cv_img.copy()
