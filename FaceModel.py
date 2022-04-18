@@ -153,13 +153,12 @@ class FaceModel:
         n_components = self.pc.shape[0]
         # reshape p-components into n*136 positive-semi-definite matrix
         P = self.pc.reshape(n_components, 68*2)
-        # get mean #TODO: make FaceModel class
         mu = self.mu.reshape(68*2)
         face = face.reshape(68*2)
         b = np.dot(P, face-mu)
         return b
     def get_deformation_factor(self, face):
-        
+        #TODO: calculate (sq-magnitude-eivenvector)/(eigenvalue). Does this function has to be here actually? (because it's not a part of facial PDM.)
         pass
 
 
