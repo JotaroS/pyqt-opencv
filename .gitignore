@@ -1,6 +1,5 @@
 landmark_data/*
-__pycache__/pts_parse.cpython-39.pyc
-__pycache__/FaceModel.cpython-39.pyc
-__pycache__/PatchModel.cpython-39.pyc
-indoor_001.pts
-indoor_001.png
+*.pyc
+*.pts
+*.png
+
