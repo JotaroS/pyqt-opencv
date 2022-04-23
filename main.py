@@ -86,6 +86,9 @@ class App(QWidget):
         # patch
         self.patch_model = PatchModel()
         self.draw_image_sub(self.patch_model.extract_patch()[0])
+        print(type(self.patch_model._weight_image))
+        self.draw_image_sub(
+            cv2.cvtColor(self.patch_model._weight_image, cv2.COLOR_GRAY2BGR))
 
 
     def refresh_image(self):
